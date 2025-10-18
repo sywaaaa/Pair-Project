@@ -4,13 +4,39 @@ from evaluator import evaluate_expression
 from utils import generate_operand, format_fraction, is_duplicate
 
 def generate_expression(r):
-    """随机生成一个四则运算表达式（运算符不超过3个）"""
+    """随机生成一个支持括号的四则运算表达式（运算符 ≤ 3）"""
     op_count = random.randint(1, 3)
-    expr = generate_operand(r)
+    tokens = [generate_operand(r)]
+
+    # 随机添加运算符与操作数
     for _ in range(op_count):
         op = random.choice(["+", "-", "×", "÷"])
-        expr += f" {op} {generate_operand(r)}"
+        tokens.append(op)
+        tokens.append(generate_operand(r))
+
+    # 随机加入括号（概率 50%）
+    expr = " ".join(tokens)
+    if op_count >= 1 and random.random() < 0.5:
+        expr = add_random_parentheses(tokens)
+
     return expr
+
+def add_random_parentheses(tokens):
+    """
+    在表达式中随机加括号，保证语法合法
+    例如 ['3', '+', '2', '×', '4'] -> '(3 + 2) × 4'
+    """
+    ops = [i for i, t in enumerate(tokens) if t in ["+", "-", "×", "÷"]]
+    if not ops:
+        return " ".join(tokens)
+
+    # 随机选择一个操作符，给它的左右各加一层括号
+    idx = random.choice(ops)
+    left = max(0, idx - 1)
+    right = min(len(tokens) - 1, idx + 1)
+
+    new_tokens = tokens[:left] + ["("] + tokens[left:right+1] + [")"] + tokens[right+1:]
+    return " ".join(new_tokens)
 
 def generate_exercises(n, r):
     """生成 n 道题目，并写入 Exercises.txt 与 Answers.txt"""
